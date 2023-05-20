@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PBIX to Flat", "PBIX to Flat\PBIX to Flat.csproj", "{8E9344D1-7341-4E83-9134-FC0B68F05AFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AddToDbFunction", "AddToDbFunction\AddToDbFunction.csproj", "{D6217A76-183A-4C20-80F8-C09788ADDF5F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E9344D1-7341-4E83-9134-FC0B68F05AFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E9344D1-7341-4E83-9134-FC0B68F05AFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E9344D1-7341-4E83-9134-FC0B68F05AFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E9344D1-7341-4E83-9134-FC0B68F05AFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6217A76-183A-4C20-80F8-C09788ADDF5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6217A76-183A-4C20-80F8-C09788ADDF5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6217A76-183A-4C20-80F8-C09788ADDF5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6217A76-183A-4C20-80F8-C09788ADDF5F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {36526427-04DC-47F5-AAE5-584A3A421A45}
+	EndGlobalSection
+EndGlobal
