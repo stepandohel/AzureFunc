@@ -9,7 +9,7 @@ namespace PBIX_to_Flat
     {
         static void Main(string[] args)
         {
-            var pbixPath = "C:\\Users\\user\\Downloads\\Sales report.pbix";
+            var pbixPath = "C:\\Users\\folko\\Downloads\\Sales report.pbix";
             var unzipPath = "Report";
             var zipPath = "Report.zip";
 

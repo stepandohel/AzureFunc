@@ -7,21 +7,54 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace AddToDbFunction
 {
-    public class Function1
+    public class AddToDbFunction
     {
-        [FunctionName("Function1")]
+        [FunctionName("AddToDbFunction")]
         public async Task RunAsync(
             [TimerTrigger("* * * * *")] TimerInfo myTimer,
             ILogger log,
-            [Sql(commandText: "dbo.PBIX_to_Flat.Visuals", connectionStringSetting: "SqlConnectionString")] IAsyncCollector<Visual> visuals,
-            [Sql(commandText: "dbo.PBIX_to_Flat.Filters", connectionStringSetting: "")] IAsyncCollector<Filter> filters,
-            [Sql(commandText: "dbo.PBIX_to_Flat.Local_Measures", connectionStringSetting: "")] IAsyncCollector<LocalMeasure> localMeasures)
+            [Sql(commandText: "PBIX_to_Flat.Visuals", connectionStringSetting: "MyDb")] IAsyncCollector<Visual> visuals
+            //[Sql(commandText: "dbo.PBIX_to_Flat.Filters", connectionStringSetting: "SqlConnectionString")] IAsyncCollector<Filter> filters,
+            //[Sql(commandText: "dbo.PBIX_to_Flat.Local_Measures", connectionStringSetting: "SqlConnectionString")] IAsyncCollector<LocalMeasure> localMeasures)
+            )
         {
+
+            var personalaccesstoken = "uuzrohsab6hkrrmpfllqsb7wggaqyfmfryiqqy44myhtyanlsljq";
+            var resp = new ResponseContent();
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Accept.Add(
+                    new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
+                    Convert.ToBase64String(
+                        System.Text.ASCIIEncoding.ASCII.GetBytes(
+                            string.Format("{0}:{1}", "", personalaccesstoken))));
+
+                using (HttpResponseMessage response = client.GetAsync(
+                // "https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/sourceProviders/TfsGit/filecontents?api-version=7.0&path=/pbixFiles/example.pbix"
+                //"https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items/README.md?versionType=Branch&version=main"
+                //"https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/sourceProviders/TfsGit/filecontents?api-version=7.0&path=README.md").Result)
+                "https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items/Sales%20report.pbix?versionType=Branch&version=main&includeContent=true").Result)
+                //"https://dev.azure.com/bricobomba/707e8741-520d-4b94-89d1-ee8bbade3a64/_apis/git/repositories/42895039-6c32-4f55-8558-8d96941adf87/items?path=README.md&versionType=Branch&version=main&versionOptions=None&includeContent=true").Result)
+                {
+                    response.EnsureSuccessStatusCode();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                     resp = JsonSerializer.Deserialize<ResponseContent>(responseBody);
+
+                    //Console.WriteLine(resp.content);
+
+                }
+            }
 
             var pbixPath = "C:\\Users\\user\\Downloads\\Sales report.pbix";
             var unzipPath = "Report";
@@ -42,14 +75,13 @@ namespace AddToDbFunction
 
             var outputFilter = new OutputObject(json);
 
-
-            await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
+           // await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
             await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
-            await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
-           
-            await filters.FlushAsync();
+            //await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
+
+            //await filters.FlushAsync();
             await visuals.FlushAsync();
-            await localMeasures.FlushAsync();
+            //await localMeasures.FlushAsync();
             //var outputJsonFilter = JsonConvert.SerializeObject(outputFilter.Filters);
             //var outputJsonVisual = JsonConvert.SerializeObject(outputFilter.Visuals);
             //var outputJsonMeasure = JsonConvert.SerializeObject(outputFilter.Measures);
@@ -59,6 +91,8 @@ namespace AddToDbFunction
             //File.WriteAllText("visual.json", outputJsonVisual);
 
             //Directory.Delete(unzipPath, true);
+            //https://dev.azure.com/bricobomba/_git/Power%20BI%20Monitor?path=/pbixFiles/example.pbix
+            //https://dev.azure.com/bricobomba/_git/Power%20BI%20Monitor?path=/pbixFiles/example.pbix&download=true&api-version=7.0        
         }
     }
 }
