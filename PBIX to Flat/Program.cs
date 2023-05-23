@@ -1,6 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
 using System.IO.Compression;
+using System.IO.Pipes;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace PBIX_to_Flat
@@ -10,8 +15,58 @@ namespace PBIX_to_Flat
         static void Main(string[] args)
         {
             var pbixPath = "C:\\Users\\folko\\Downloads\\Sales report.pbix";
+            var pbixPath2 = "C:\\Users\\folko\\Downloads\\Sales report2.pbix";
+
+
             var unzipPath = "Report";
             var zipPath = "Report.zip";
+
+            var lines = File.ReadAllLines(pbixPath);
+            var bytes = File.ReadAllBytes(pbixPath);
+
+            //string fileName = "Report.zip";
+            //byte[] compressedBytes;
+
+            //using (var outStream = new MemoryStream())
+            //{
+            //    using (var archive = new ZipArchive(outStream, ZipArchiveMode.Create, true))
+            //    {
+            //        var fileInArchive = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+            //        using (var entryStream = fileInArchive.Open())
+            //        using (var fileToCompressStream = new MemoryStream(bytes))
+            //        {
+            //            fileToCompressStream.CopyTo(entryStream);
+            //        }
+            //    }
+            //    compressedBytes = outStream.ToArray();         
+
+            //    using (var zip = new ZipArchive(outStream, ZipArchiveMode.Read))
+            //    {
+            //        foreach (var entry in zip.Entries)
+            //        {
+            //            var innerZip = new ZipArchive(entry.Open(), ZipArchiveMode.Read);
+            //                foreach (var innerEntry in innerZip.Entries)
+            //                {
+            //                    using (var stream = entry.Open())
+            //                    {
+            //                        if (innerEntry.Name == "Layout")
+            //                        {                                    
+            //                        using(MemoryStream POTOK =  new MemoryStream())
+            //                        {
+            //                            innerEntry.Open().CopyTo(POTOK);
+            //                            POTOK.Position = 0;
+            //                            var extractedBytes = POTOK.ToArray();
+            //                            var str = Encoding.Unicode.GetString(extractedBytes);
+            //                            var ab = new OutputObject(JObject.Parse(str));
+            //                        }                                   
+            //                    }
+            //                    }
+            //                }
+            //            }
+            //        }
+                
+            //}
+            //File.WriteAllBytes(fileName, compressedBytes);
 
             File.Copy(pbixPath, zipPath);
             ZipFile.ExtractToDirectory(zipPath, unzipPath);

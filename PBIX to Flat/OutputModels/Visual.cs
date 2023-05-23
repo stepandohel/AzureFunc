@@ -2,12 +2,12 @@
 {
     public class Visual
     {
-        public string? ReportIdentifier { get; set; }
-        public string? PageId { get; set; }
-        public string? PageName { get; set; }
-        public string? VisualId { get; set; }
-        public string? VisualType { get; set; }
-        public string? TableName { get; set; }
-        public string? ObjectName { get; set; }
+        public string? report_id { get; set; }
+        public string? page_id { get; set; }
+        public string? page_name { get; set; }
+        public string? visual_id { get; set; }
+        public string? visual_type { get; set; }
+        public string? table_name { get; set; }
+        public string? object_name { get; set; }
     }
 }

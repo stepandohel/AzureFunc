@@ -26,10 +26,10 @@ namespace PBIX_to_Flat
                         {
                             Measures.Add(new LocalMeasure
                             {
-                                ReportIdentifier = _reposrtIdentifier,
-                                TableName = entity["name"].ToString(),
-                                MeasureName = measure["name"].ToString(),
-                                DAXDefinition = measure["expression"].ToString()
+                                report_id = _reposrtIdentifier,
+                                table_name = entity["name"].ToString(),
+                                measure_name = measure["name"].ToString(),
+                                DAX_definition = measure["expression"].ToString()
                             });
                         }
                     }
@@ -156,13 +156,13 @@ namespace PBIX_to_Flat
 
                                     Visuals.Add(new Visual
                                     {
-                                        ReportIdentifier = _reposrtIdentifier,
-                                        PageId = pageId,
-                                        PageName = pageName,
-                                        VisualId = visualId,
-                                        VisualType = visualType,
-                                        TableName = tableName,
-                                        ObjectName = objectName
+                                        report_id = _reposrtIdentifier,
+                                        page_id = pageId,
+                                        page_name = pageName,
+                                        visual_id = visualId,
+                                        visual_type = visualType,
+                                        table_name = tableName,
+                                        object_name = objectName
                                     });
                                 }
                             }
@@ -220,14 +220,14 @@ namespace PBIX_to_Flat
 
                 Filters.Add(new Filter
                 {
-                    ReportIdentifier = _reposrtIdentifier,
-                    FilterLevel = filterLevel,
-                    PageId = pageId,
-                    PageName = pageName,
-                    VisualId = visualId,
-                    VisualType = visualType,
-                    TableName = tblName,
-                    Column = objName,
+                    report_id = _reposrtIdentifier,
+                    filter_level = filterLevel,
+                    page_id = pageId,
+                    page_name = pageName,
+                    visual_id = visualId,
+                    visual_type = visualType,
+                    table_name = tblName,
+                    column = objName,
                 });
             }
         }

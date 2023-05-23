@@ -1,15 +1,18 @@
-﻿namespace PBIX_to_Flat.OutputModels
+﻿using System.Numerics;
+
+namespace PBIX_to_Flat.OutputModels
 {
     public class Filter
     {
-        public string? ReportIdentifier { get; set; }
-        public string? FilterLevel { get; set; }
-        public string? PageId { get; set; }
-        public string? PageName { get; set; }
-        public string? VisualId { get; set; }
-        public string? VisualType { get; set; }
-        public string? TableName { get; set; }
-        public string? Column { get; set; }
-        public string? FilterValues { get; set; }
+        public int id { get; set; }
+        public string? report_id { get; set; }
+        public string? filter_level { get; set; }
+        public string? page_id { get; set; }
+        public string? page_name { get; set; }
+        public string? visual_id { get; set; }
+        public string? visual_type { get; set; }
+        public string? table_name { get; set; }
+        public string? column { get; set; }
+        public string? filter_values { get; set; }
     }
 }

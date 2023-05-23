@@ -2,9 +2,10 @@
 {
     public class LocalMeasure
     {
-        public string? ReportIdentifier { get; set; }
-        public string? TableName { get; set; }
-        public string? MeasureName { get; set; }
-        public string? DAXDefinition { get; set; }
+        public string? report_id { get; set; }
+        public string? table_name { get; set; }
+        public string? measure_name { get; set; }
+        public string? DAX_definition { get; set; }
+        public int id { get; set; }
     }
 }

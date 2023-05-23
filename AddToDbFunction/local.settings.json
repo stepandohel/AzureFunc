@@ -1,0 +1,16 @@
+﻿{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "MyDb": "Server=tcp:sql-dbs-pbi-viz-01.database.windows.net,1433;Initial Catalog=sql-db-pbi-viz-01;Persist Security Info=False;User ID=o0dvVoOT9aTiVOA3uPAL;Password=T37jymq68XZM3MqoYv7w;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+    "PersonalAccessToken": "s6tbds2vcgkhgvzw3ignepsnwfm3qaw5l7ptfumtytwz64bbhnaq",
+    "FileURL": "https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items/Sales%20report.pbix?versionType=Branch&version=main&includeContent=true"
+  },
+  
+
+  "Host": {
+    "CORS": "*"
+  }
+}
