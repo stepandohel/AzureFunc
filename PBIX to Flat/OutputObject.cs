@@ -1,12 +1,15 @@
 ﻿using Newtonsoft.Json.Linq;
 using PBIX_to_Flat.OutputModels;
+using System.Text.RegularExpressions;
 
 namespace PBIX_to_Flat
 {
     public class OutputObject
     {
-        public OutputObject(JObject input)
+        public OutputObject(JObject input,string fileName)
         {
+            _reposrtIdentifier = fileName;
+
             Filters = new List<Filter>();
             Visuals = new List<Visual>();
             Measures = new List<LocalMeasure>();
@@ -186,34 +189,56 @@ namespace PBIX_to_Flat
             }
         }
 
-        private string _reposrtIdentifier = "Sales report";
+        private string _reposrtIdentifier; //"Sales report"; //Название файла
+                                                            //312  фильтр 
+                                                            //Папку
+
 
         private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? visualId, string? visualType)
         {
-            foreach (var o in filters.Children())
+            string filterValue = "";
+            foreach (var item in filters.Children())
             {
                 string objName = string.Empty;
+                //start
+                if (item["filter"] is not null)
+                {
+                    var filterValuCurrent = item["filter"].ToString();
+                    Regex regex = new Regex("\"Value\": \"([^\"]+)\"");
+                    var m = regex.Matches(filterValuCurrent);
+
+                    foreach (Match subItem in m)
+                    {
+                        var zxc = subItem.Value.Substring(10);
+                        var zxc1 = zxc.Remove(zxc.Length - 1);
+                        filterValue += zxc1 + ", ";
+                    }
+                    if(filterValue.Length>0)
+                    filterValue = filterValue.Remove(filterValue.Length-2);
+                }
+
+                //end
                 string tblName = string.Empty;
 
                 // Note: Add filter conditions
                 try
                 {
-                    if (o["expression"]?["Column"] != null)
+                    if (item["expression"]?["Column"] != null)
                     {
-                        objName = (string)o["expression"]["Column"]["Property"];
-                        tblName = (string)o["expression"]["Column"]["Expression"]["SourceRef"]["Entity"];
+                        objName = (string)item["expression"]["Column"]["Property"];
+                        tblName = (string)item["expression"]["Column"]["Expression"]["SourceRef"]["Entity"];
                     }
-                    else if (o["expression"]?["Measure"] != null)
+                    else if (item["expression"]?["Measure"] != null)
                     {
-                        objName = (string)o["expression"]["Measure"]["Property"];
-                        tblName = (string)o["expression"]["Measure"]["Expression"]["SourceRef"]["Entity"];
+                        objName = (string)item["expression"]["Measure"]["Property"];
+                        tblName = (string)item["expression"]["Measure"]["Expression"]["SourceRef"]["Entity"];
                     }
-                    else if (o["expression"]?["HierarchyLevel"] != null)
+                    else if (item["expression"]?["HierarchyLevel"] != null)
                     {
-                        string levelName = (string)o["expression"]["HierarchyLevel"]["Level"];
-                        string hierName = (string)o["expression"]["HierarchyLevel"]["Expression"]["Hierarchy"]["Hierarchy"];
+                        string levelName = (string)item["expression"]["HierarchyLevel"]["Level"];
+                        string hierName = (string)item["expression"]["HierarchyLevel"]["Expression"]["Hierarchy"]["Hierarchy"];
                         objName = hierName + "." + levelName;
-                        tblName = (string)o["expression"]["HierarchyLevel"]["Expression"]["Hierarchy"]["Expression"]["SourceRef"]["Entity"];
+                        tblName = (string)item["expression"]["HierarchyLevel"]["Expression"]["Hierarchy"]["Expression"]["SourceRef"]["Entity"];
                     }
                 }
                 catch { }
@@ -228,6 +253,7 @@ namespace PBIX_to_Flat
                     visual_type = visualType,
                     table_name = tblName,
                     column = objName,
+                    filter_values = filterValue=="" ? null: filterValue
                 });
             }
         }

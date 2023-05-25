@@ -13,6 +13,7 @@ namespace AddToDbFunction
     internal class MyService
     {
         byte[] responseBody;
+        string fileName = "";
         public MyService(byte[] responseBody)
         {
             this.responseBody = responseBody; 
@@ -26,11 +27,12 @@ namespace AddToDbFunction
                 {
                     foreach (var entry in zip.Entries)
                     {
-                        using (MemoryStream POTOK = new MemoryStream())
+                        fileName = entry.Name;
+                        using (MemoryStream memStream = new MemoryStream())
                         {
-                            entry.Open().CopyTo(POTOK);
-                            POTOK.Position = 0;
-                            outputBytes = POTOK.ToArray();
+                            entry.Open().CopyTo(memStream);
+                            memStream.Position = 0;
+                            outputBytes = memStream.ToArray();
                         }
                     }
                 }
@@ -69,14 +71,13 @@ namespace AddToDbFunction
                             {
                                 if (innerEntry.Name == "Layout")
                                 {
-                                    using (MemoryStream POTOK = new MemoryStream())
+                                    using (MemoryStream memString = new MemoryStream())
                                     {
-                                        innerEntry.Open().CopyTo(POTOK);
-                                        POTOK.Position = 0;
-                                        var extractedBytes = POTOK.ToArray();
+                                        innerEntry.Open().CopyTo(memString);
+                                        memString.Position = 0;
+                                        var extractedBytes = memString.ToArray();
                                         var str = Encoding.Unicode.GetString(extractedBytes);
-                                        outputFilter = new OutputObject(JObject.Parse(str));
-
+                                        outputFilter = new OutputObject(JObject.Parse(str),this.fileName.Remove(this.fileName.Length-5));
                                     }
                                 }
                             }
