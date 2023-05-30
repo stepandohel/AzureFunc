@@ -13,12 +13,15 @@ namespace AddToDbFunction
     internal class MyService
     {
         byte[] responseBody;
-        string fileName = "";
+
+        Dictionary<string, byte[]> entriesCollection = new Dictionary<string, byte[]>();
+       
         public MyService(byte[] responseBody)
         {
-            this.responseBody = responseBody; 
+            this.responseBody = responseBody;
         }
-        public byte[] GetSourceFileFromZip()
+
+        public Dictionary<string, byte[]> GetSourceFilesFromZip()
         {
             byte[] outputBytes = new byte[1];
             using (var fileToCompressStream = new MemoryStream(responseBody))
@@ -27,20 +30,23 @@ namespace AddToDbFunction
                 {
                     foreach (var entry in zip.Entries)
                     {
-                        fileName = entry.Name;
-                        using (MemoryStream memStream = new MemoryStream())
+                        if (entry.Name.Substring(entry.Name.Length - 4) == "pbix" && entry.Name.Length > 5)
                         {
-                            entry.Open().CopyTo(memStream);
-                            memStream.Position = 0;
-                            outputBytes = memStream.ToArray();
+                            using (MemoryStream memStream = new MemoryStream())
+                            {
+                                entry.Open().CopyTo(memStream);
+                                memStream.Position = 0;
+                                outputBytes = memStream.ToArray();
+                                entriesCollection.Add(entry.Name.Remove(entry.Name.Length - 5), outputBytes);
+                            }
                         }
                     }
                 }
             }
-            return outputBytes;
+            return entriesCollection;
         }
 
-        public OutputObject ParseFileBytes(byte[] fileBytes)
+        public OutputObject ParseFileBytes(KeyValuePair<string, byte[]> fileItem)
         {
             string fileName = "Report.zip";
             byte[] compressedBytes;
@@ -53,7 +59,7 @@ namespace AddToDbFunction
                 {
                     var fileInArchive = archive.CreateEntry(fileName, CompressionLevel.Optimal);
                     using (var entryStream = fileInArchive.Open())
-                    using (var fileToCompressStream = new MemoryStream(fileBytes))
+                    using (var fileToCompressStream = new MemoryStream(fileItem.Value))
                     {
                         fileToCompressStream.CopyTo(entryStream);
                     }
@@ -77,7 +83,7 @@ namespace AddToDbFunction
                                         memString.Position = 0;
                                         var extractedBytes = memString.ToArray();
                                         var str = Encoding.Unicode.GetString(extractedBytes);
-                                        outputFilter = new OutputObject(JObject.Parse(str),this.fileName.Remove(this.fileName.Length-5));
+                                        outputFilter = new OutputObject(JObject.Parse(str), fileItem.Key);
                                     }
                                 }
                             }

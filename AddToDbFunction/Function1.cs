@@ -32,7 +32,6 @@ namespace AddToDbFunction
             var personalAccessToken = Environment.GetEnvironmentVariable("PersonalAccessToken");
 
             byte[] responseBody;
-            OutputObject outputFilter = null;
 
             //получаешь файл из репозитория
             using (HttpClient client = new HttpClient())
@@ -54,20 +53,23 @@ namespace AddToDbFunction
                 }
             }
 
-            //Сервис для работы с файлом 
+            //Сервис для работы с архивом 
             var service = new MyService(responseBody);
 
-            //Распаковываешь архив с файлом и берешь биты
-            byte[] fileBytes = service.GetSourceFileFromZip();
+            //Распаковываешь архив с файлом и берешь файлы
+            var items = service.GetSourceFilesFromZip();
 
-            //Парсишь биты
-            outputFilter = service.ParseFileBytes(fileBytes);
+            //Парсишь файлы
+            foreach (var item in items)
+            {
+                var outputFilter = service.ParseFileBytes(item);
+                await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
+                await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
+                await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
+            }
 
-            //Сохраняю в бд по табицам
-            await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
-            await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
-            await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
 
+            ////Сохраняю в бд по табицам
             await filters.FlushAsync();
             await visuals.FlushAsync();
             await localMeasures.FlushAsync();

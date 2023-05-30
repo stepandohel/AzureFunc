@@ -6,7 +6,7 @@ namespace PBIX_to_Flat
 {
     public class OutputObject
     {
-        public OutputObject(JObject input,string fileName)
+        public OutputObject(JObject input, string fileName)
         {
             _reposrtIdentifier = fileName;
 
@@ -57,8 +57,9 @@ namespace PBIX_to_Flat
             {
                 foreach (var o in input["sections"].Children())
                 {
-                    string? pageId = o["name"]?.ToString();
+                    string? pageId = o["id"]?.ToString();
                     string? pageName = o["displayName"]?.ToString();
+                    //string? VisualId = o["id"]?.ToString();
 
                     if (o["filters"] != null)
                     {
@@ -75,9 +76,11 @@ namespace PBIX_to_Flat
                     foreach (var vc in o["visualContainers"].Children())
                     {
                         string config = (string)vc["config"];
+                        string id = (string)vc["id"];
                         string formattedconfigJson = JToken.Parse(config).ToString();
+                        string? VisualId = id;
                         var configJson = JObject.Parse(formattedconfigJson);
-                        string visualId = (string)configJson["name"];
+                        //string visualId = VisualId;
                         string visualType = string.Empty;
                         string visualName = string.Empty;
                         string parentGroup = string.Empty;
@@ -149,7 +152,6 @@ namespace PBIX_to_Flat
                                         {
                                             string? n = t["Name"]?.ToString();
                                             string? tbl = t["Entity"]?.ToString();
-
                                             if (src == n)
                                             {
                                                 tableName = tbl;
@@ -162,7 +164,7 @@ namespace PBIX_to_Flat
                                         report_id = _reposrtIdentifier,
                                         page_id = pageId,
                                         page_name = pageName,
-                                        visual_id = visualId,
+                                        visual_id = VisualId,
                                         visual_type = visualType,
                                         table_name = tableName,
                                         object_name = objectName
@@ -182,42 +184,31 @@ namespace PBIX_to_Flat
                             string formattedvisfilterJson = JToken.Parse(visfilter).ToString();
                             var visfilterJson = JArray.Parse(formattedvisfilterJson);
 
-                            AddFilters(visfilterJson, "VisualFilter", pageId, pageName, visualId, visualType);
+                            AddFilters(visfilterJson, "VisualFilter", pageId, pageName, VisualId, visualType);
                         }
                     }
                 }
             }
         }
 
-        private string _reposrtIdentifier; //"Sales report"; //Название файла
-                                                            //312  фильтр 
-                                                            //Папку
+        private string _reposrtIdentifier;
 
 
-        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? visualId, string? visualType)
+        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? VisualId, string? visualType)
         {
             string filterValue = "";
             foreach (var item in filters.Children())
             {
                 string objName = string.Empty;
-                //start
+
+                //GetFilterValue
                 if (item["filter"] is not null)
                 {
-                    var filterValuCurrent = item["filter"].ToString();
-                    Regex regex = new Regex("\"Value\": \"([^\"]+)\"");
-                    var m = regex.Matches(filterValuCurrent);
 
-                    foreach (Match subItem in m)
-                    {
-                        var zxc = subItem.Value.Substring(10);
-                        var zxc1 = zxc.Remove(zxc.Length - 1);
-                        filterValue += zxc1 + ", ";
-                    }
-                    if(filterValue.Length>0)
-                    filterValue = filterValue.Remove(filterValue.Length-2);
+                    item["filter"].First.Remove();
+                    filterValue = item["filter"].ToString();
                 }
 
-                //end
                 string tblName = string.Empty;
 
                 // Note: Add filter conditions
@@ -249,7 +240,7 @@ namespace PBIX_to_Flat
                     filter_level = filterLevel,
                     page_id = pageId,
                     page_name = pageName,
-                    visual_id = visualId,
+                    visual_id = VisualId,
                     visual_type = visualType,
                     table_name = tblName,
                     column = objName,
