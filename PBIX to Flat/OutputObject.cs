@@ -57,7 +57,7 @@ namespace PBIX_to_Flat
             {
                 foreach (var o in input["sections"].Children())
                 {
-                    string? pageId = o["id"]?.ToString();
+                    string? pageId = o["name"]?.ToString();
                     string? pageName = o["displayName"]?.ToString();
                     //string? VisualId = o["id"]?.ToString();
 
@@ -76,11 +76,16 @@ namespace PBIX_to_Flat
                     foreach (var vc in o["visualContainers"].Children())
                     {
                         string config = (string)vc["config"];
-                        string id = (string)vc["id"];
+                        //string id = (string)vc["id"];
                         string formattedconfigJson = JToken.Parse(config).ToString();
-                        string? VisualId = id;
+                        //string VisualId = id;
                         var configJson = JObject.Parse(formattedconfigJson);
                         //string visualId = VisualId;
+                        
+                        string visualIdFirst = (string)configJson["name"];
+                        string visualNumId = (string)vc["id"]; ;
+                        string VisualId = visualIdFirst + " | " + (visualNumId != null ? visualNumId : "Unknown");
+                        //string VisualFullId = VisualId + " | " + VisualNumId;
                         string visualType = string.Empty;
                         string visualName = string.Empty;
                         string parentGroup = string.Empty;
@@ -194,7 +199,7 @@ namespace PBIX_to_Flat
         private string _reposrtIdentifier;
 
 
-        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? VisualId, string? visualType)
+        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? visualId, string? visualType)
         {
             string filterValue = "";
             foreach (var item in filters.Children())
@@ -240,11 +245,11 @@ namespace PBIX_to_Flat
                     filter_level = filterLevel,
                     page_id = pageId,
                     page_name = pageName,
-                    visual_id = VisualId,
+                    visual_id = visualId,
                     visual_type = visualType,
                     table_name = tblName,
                     column = objName,
-                    filter_values = filterValue=="" ? null: filterValue
+                    filter_values = filterValue == "" ? null : filterValue
                 });
             }
         }

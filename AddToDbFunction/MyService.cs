@@ -24,7 +24,7 @@ namespace AddToDbFunction
         public Dictionary<string, byte[]> GetSourceFilesFromZip()
         {
             byte[] outputBytes = new byte[1];
-            using (var fileToCompressStream = new MemoryStream(responseBody))
+            using (var fileToCompressStream = new MemoryStream(responseBody,false))
             {
                 using (var zip = new ZipArchive(fileToCompressStream, ZipArchiveMode.Read))
                 {

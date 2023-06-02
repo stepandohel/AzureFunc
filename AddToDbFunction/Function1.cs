@@ -1,17 +1,12 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using PBIX_to_Flat;
 using PBIX_to_Flat.OutputModels;
 using System;
-using System.IO;
-using System.IO.Compression;
+using System.Data.SqlClient;
 using System.Linq;
-using System.Net.Http.Headers;
 using System.Net.Http;
-using System.Text;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Text.Json;
 
 namespace AddToDbFunction
 {
@@ -37,7 +32,7 @@ namespace AddToDbFunction
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Accept.Add(
-                    new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/zip"));
+                    new MediaTypeWithQualityHeaderValue("application/zip"));
 
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
                     Convert.ToBase64String(
@@ -50,11 +45,40 @@ namespace AddToDbFunction
                 {
                     response.EnsureSuccessStatusCode();
                     responseBody = await response.Content.ReadAsByteArrayAsync();
+
+                    //"https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items/pbixFiles/newExampleFiles?versionType=Branch&version=main&includeContentMetadata=true&latestProcessedChange=true"
+                    //var zxc = await response.Content.ReadAsStringAsync();
+                    //var obj = JsonConvert.DeserializeObject(zxc);
+                    //var formatted = JsonConvert.SerializeObject(obj, Formatting.Indented);
                 }
             }
 
             //Сервис для работы с архивом 
             var service = new MyService(responseBody);
+
+            using (SqlConnection connection = new SqlConnection(Environment.GetEnvironmentVariable("MyDb")))
+            {
+                // Open the connection
+                connection.Open();
+
+                // Create a SQL command to delete all records in the table
+                using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Visuals", connection))
+                {
+                    // Execute the command
+                    command.ExecuteNonQuery();
+                }
+                using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Filters", connection))
+                {
+                    // Execute the command
+                    command.ExecuteNonQuery();
+                }
+                using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Local_Measures", connection))
+                {
+                    // Execute the command
+                    command.ExecuteNonQuery();
+                }
+            }
+
 
             //Распаковываешь архив с файлом и берешь файлы
             var items = service.GetSourceFilesFromZip();
@@ -68,7 +92,7 @@ namespace AddToDbFunction
                 await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
             }
 
-
+            await Task.Delay(10_000);
             ////Сохраняю в бд по табицам
             await filters.FlushAsync();
             await visuals.FlushAsync();
