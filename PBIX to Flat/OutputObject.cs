@@ -81,7 +81,7 @@ namespace PBIX_to_Flat
                         //string VisualId = id;
                         var configJson = JObject.Parse(formattedconfigJson);
                         //string visualId = VisualId;
-                        
+
                         string visualIdFirst = (string)configJson["name"];
                         string visualNumId = (string)vc["id"]; ;
                         string VisualId = visualIdFirst + " | " + (visualNumId != null ? visualNumId : "Unknown");

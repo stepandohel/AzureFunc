@@ -10,5 +10,6 @@
         public string? table_name { get; set; }
         public string? object_name { get; set; }
         public int id { get; set; }
+        public DateTime modified_date { get; set; }
     }
 }

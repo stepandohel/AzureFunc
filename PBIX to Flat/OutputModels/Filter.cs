@@ -14,5 +14,6 @@ namespace PBIX_to_Flat.OutputModels
         public string? table_name { get; set; }
         public string? column { get; set; }
         public string? filter_values { get; set; }
+        public DateTime modified_date { get; set; }
     }
 }
