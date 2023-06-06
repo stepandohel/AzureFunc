@@ -1,14 +1,17 @@
 ﻿using Newtonsoft.Json.Linq;
 using PBIX_to_Flat.OutputModels;
+using System;
 using System.Text.RegularExpressions;
 
 namespace PBIX_to_Flat
 {
     public class OutputObject
     {
-        public OutputObject(JObject input, string fileName)
+        DateTime _dateTime;
+        public OutputObject(JObject input, string fileName,DateTime dateTime)
         {
             _reposrtIdentifier = fileName;
+            _dateTime=dateTime;
 
             Filters = new List<Filter>();
             Visuals = new List<Visual>();
@@ -32,7 +35,8 @@ namespace PBIX_to_Flat
                                 report_id = _reposrtIdentifier,
                                 table_name = entity["name"].ToString(),
                                 measure_name = measure["name"].ToString(),
-                                DAX_definition = measure["expression"].ToString()
+                                DAX_definition = measure["expression"].ToString(),
+                                modified_date = _dateTime
                             });
                         }
                     }
@@ -172,7 +176,8 @@ namespace PBIX_to_Flat
                                         visual_id = VisualId,
                                         visual_type = visualType,
                                         table_name = tableName,
-                                        object_name = objectName
+                                        object_name = objectName,
+                                        modified_date= _dateTime
                                     });
                                 }
                             }
@@ -249,7 +254,8 @@ namespace PBIX_to_Flat
                     visual_type = visualType,
                     table_name = tblName,
                     column = objName,
-                    filter_values = filterValue == "" ? null : filterValue
+                    filter_values = filterValue == "" ? null : filterValue,
+                    modified_date = _dateTime
                 });
             }
         }

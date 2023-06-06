@@ -8,6 +8,8 @@ namespace AddToDbFunction
         public byte[] reportBody { get; set; }
         public DateTime modified_date { get; set; }
         public string reportURL { get; set; }
+        public bool is_Changed { get; set; }
+        public bool is_New { get; set; }
 
     }
 }

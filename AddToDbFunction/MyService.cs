@@ -12,16 +12,13 @@ namespace AddToDbFunction
 {
     internal class MyService
     {
-        byte[] responseBody;
-
-        Dictionary<string, byte[]> entriesCollection = new Dictionary<string, byte[]>();
-       
-        public MyService(byte[] responseBody)
+        DateTime _dateTime;
+        public MyService(DateTime dateTime)
         {
-            this.responseBody = responseBody;
+            _dateTime = dateTime;
         }
 
-        public Dictionary<string, byte[]> GetSourceFilesFromZip()
+        public byte[] GetSourceFilesFromZip(byte[] responseBody)
         {
             byte[] outputBytes = new byte[1];
             using (var fileToCompressStream = new MemoryStream(responseBody,false))
@@ -37,16 +34,15 @@ namespace AddToDbFunction
                                 entry.Open().CopyTo(memStream);
                                 memStream.Position = 0;
                                 outputBytes = memStream.ToArray();
-                                entriesCollection.Add(entry.Name.Remove(entry.Name.Length - 5), outputBytes);
                             }
                         }
                     }
                 }
             }
-            return entriesCollection;
+            return outputBytes;
         }
 
-        public OutputObject ParseFileBytes(KeyValuePair<string, byte[]> fileItem)
+        public OutputObject ParseFileBytes(byte[] fileBytes, string reportName)
         {
             string fileName = "Report.zip";
             byte[] compressedBytes;
@@ -59,7 +55,7 @@ namespace AddToDbFunction
                 {
                     var fileInArchive = archive.CreateEntry(fileName, CompressionLevel.Optimal);
                     using (var entryStream = fileInArchive.Open())
-                    using (var fileToCompressStream = new MemoryStream(fileItem.Value))
+                    using (var fileToCompressStream = new MemoryStream(fileBytes))
                     {
                         fileToCompressStream.CopyTo(entryStream);
                     }
@@ -83,7 +79,7 @@ namespace AddToDbFunction
                                         memString.Position = 0;
                                         var extractedBytes = memString.ToArray();
                                         var str = Encoding.Unicode.GetString(extractedBytes);
-                                        outputFilter = new OutputObject(JObject.Parse(str), fileItem.Key);
+                                        outputFilter = new OutputObject(JObject.Parse(str), reportName, _dateTime);
                                     }
                                 }
                             }

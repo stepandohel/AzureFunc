@@ -5,7 +5,7 @@
     "AzureWebJobsDashboard": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "MyDb": "Server=tcp:sql-dbs-pbi-viz-01.database.windows.net,1433;Initial Catalog=sql-db-pbi-viz-01;Persist Security Info=False;User ID=o0dvVoOT9aTiVOA3uPAL;Password=T37jymq68XZM3MqoYv7w;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
-    "PersonalAccessToken": "3dq2d4vc4ycti66my6y5kptt46tydzuxyqapn2muc373bsq2nr2a",
+    "PersonalAccessToken": "6kinb4pptdlkrv4hzb5d3kav7jkddvcfjoes7silv4q2l76sx7fa",
     "FileURL": "https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items/pbixFiles/newExampleFiles?versionType=Branch&version=main&includeContent=true",
     "FileMetaDataURL": "https://dev.azure.com/bricobomba/Power%20BI%20Monitor/_apis/git/repositories/Power%20BI%20Monitor/items?scopePath=/pbixFiles/newExampleFiles&recursionLevel=Full&api-version=5.1&latestProcessedChange=true"
   },
