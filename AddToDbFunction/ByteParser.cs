@@ -10,12 +10,10 @@ using Newtonsoft.Json.Linq;
 
 namespace AddToDbFunction
 {
-    internal class MyService
+    internal class ByteParser
     {
-        DateTime _dateTime;
-        public MyService(DateTime dateTime)
+        public ByteParser()
         {
-            _dateTime = dateTime;
         }
 
         public byte[] GetSourceFilesFromZip(byte[] responseBody)
@@ -42,7 +40,7 @@ namespace AddToDbFunction
             return outputBytes;
         }
 
-        public OutputObject ParseFileBytes(byte[] fileBytes, string reportName)
+        public OutputObject ParseFileBytes(byte[] fileBytes, string reportName, DateTime dataTime)
         {
             string fileName = "Report.zip";
             byte[] compressedBytes;
@@ -79,7 +77,7 @@ namespace AddToDbFunction
                                         memString.Position = 0;
                                         var extractedBytes = memString.ToArray();
                                         var str = Encoding.Unicode.GetString(extractedBytes);
-                                        outputFilter = new OutputObject(JObject.Parse(str), reportName, _dateTime);
+                                        outputFilter = new OutputObject(JObject.Parse(str), reportName, dataTime);
                                     }
                                 }
                             }

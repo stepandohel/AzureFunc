@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AddToDbFunction.Helpers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -19,25 +20,16 @@ namespace AddToDbFunction
     {
         [FunctionName("AddToDbFunction")]
         public async Task RunAsync(
-            // Таймер на каждую минуту для тестов, тут если что менять https://crontab.cronhub.io/
-            //[TimerTrigger("* * * * *")] TimerInfo myTimer,
-            //ILogger log,
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log,
-            //тут к беру таблицы из бд
             [Sql(commandText: "PBIX_to_Flat.Visuals", connectionStringSetting: "MyDb")] IAsyncCollector<Visual> visuals,
             [Sql(commandText: "PBIX_to_Flat.Filters", connectionStringSetting: "MyDb")] IAsyncCollector<Filter> filters,
             [Sql(commandText: "PBIX_to_Flat.Local_Measures", connectionStringSetting: "MyDb")] IAsyncCollector<LocalMeasure> localMeasures)
 
         {
-            // твой 30 дневный токен на файлы из azure dev ops из local.setting
             var personalAccessToken = Environment.GetEnvironmentVariable("PersonalAccessToken");
-
-            byte[] responseBody;
-            string testURL = "";
             var reportObjects = new List<ReportObject>();
 
-            //получаешь файл из репозитория
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Accept.Add(
@@ -48,14 +40,12 @@ namespace AddToDbFunction
                         System.Text.ASCIIEncoding.ASCII.GetBytes(
                             string.Format("{0}:{1}", "", personalAccessToken))));
 
-
-
                 using (HttpResponseMessage response = client.GetAsync(
-                //url файла из local.setting
+
                 Environment.GetEnvironmentVariable("FileMetaDataURL")).Result)
                 {
                     response.EnsureSuccessStatusCode();
-               
+
                     var folderMetaData = await response.Content.ReadAsStringAsync();
                     var folderMetaDataJson = JObject.Parse(folderMetaData);
                     var metaDataValue = folderMetaDataJson["value"];
@@ -84,97 +74,75 @@ namespace AddToDbFunction
 
                 using (SqlConnection connection = new SqlConnection(Environment.GetEnvironmentVariable("MyDb")))
                 {
-                    // Open the connection
                     connection.Open();
 
-
-                    foreach (var reportObject in reportObjects)
+                    using (SQLHelper sqlHelper = new SQLHelper(connection))
                     {
-                        //Check tables
-                        using (SqlCommand command = new SqlCommand($"select report_id, modified_date from PBIX_to_Flat.Visuals WHERE report_id = @reportId group by report_id, modified_date", connection))
+                        foreach (var reportObject in reportObjects)
                         {
-                            command.Parameters.AddWithValue("@reportId", reportObject.reportName);
-                            // Execute the command
-                            SqlDataReader reader = command.ExecuteReader();
-                            try
+                            using (SqlDataReader reader = sqlHelper.SelectGroupById(reportObject.reportName))
                             {
-                                while (reader.Read())
+                                try
                                 {
-
-                                    var item = reportObjects.Find(x => x.reportName == reader["report_id"].ToString());
-
-                                    if (item is not null)
+                                    while (reader.Read())
                                     {
-                                        item.is_New = false;
-                                    }
-                                    if (item is not null && item.modified_date >= Convert.ToDateTime(reader["Modified_Date"]))
-                                    {
-                                        item.is_Changed = true;
+
+                                        var item = reportObjects.Find(x => x.reportName == reader["report_id"].ToString());
+
+                                        if (item is not null)
+                                        {
+                                            item.is_New = false;
+                                        }
+                                        if (item is not null && item.modified_date > Convert.ToDateTime(reader["Modified_Date"]))
+                                        {
+                                            item.is_Changed = true;
+                                        }
                                     }
                                 }
-                            }
-                            finally
-                            {
-                                // Always call Close when done reading.
-                                reader.Close();
-                            }
-                        }
-                    }
-
-                    foreach (var reportObject in reportObjects)
-                    {
-                        if (reportObject.is_Changed && !reportObject.is_New)
-                        {
-                            // Create a SQL command to delete all records in the table
-                            using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Filters WHERE report_id = @reportId", connection))
-                            {
-                                command.Parameters.AddWithValue("reportId", reportObject.reportName);
-                                // Execute the command
-                                command.ExecuteNonQuery();
-                            }
-                            using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Visuals WHERE report_id = @reportId", connection))
-                            {
-                                command.Parameters.AddWithValue("@reportId", reportObject.reportName);
-                                // Execute the command
-                                command.ExecuteNonQuery();
-                            }
-                            using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Local_Measures WHERE report_id = @reportId", connection))
-                            {
-                                command.Parameters.AddWithValue("@reportId", reportObject.reportName);
-                                // Execute the command
-                                command.ExecuteNonQuery();
+                                finally
+                                {
+                                    reader.Close();
+                                }
                             }
                         }
-                        if (reportObject.is_New || reportObject.is_Changed)
-                        {
-                            using (HttpResponseMessage response = client.GetAsync(reportObject.reportURL).Result)
-                            {
-                                response.EnsureSuccessStatusCode();
-                                reportObject.reportBody = await response.Content.ReadAsByteArrayAsync();
 
+                        foreach (var reportObject in reportObjects)
+                        {
+                            if (reportObject.is_Changed && !reportObject.is_New)
+                            {
+                                sqlHelper.DeleteById("PBIX_to_Flat.Filters", reportObject.reportName);
+                                sqlHelper.DeleteById("PBIX_to_Flat.Visuals", reportObject.reportName);
+                                sqlHelper.DeleteById("PBIX_to_Flat.Local_Measures", reportObject.reportName);
+
+                            }
+                            if (reportObject.is_New || reportObject.is_Changed)
+                            {
+                                using (HttpResponseMessage response = client.GetAsync(reportObject.reportURL).Result)
+                                {
+                                    response.EnsureSuccessStatusCode();
+                                    reportObject.reportBody = await response.Content.ReadAsByteArrayAsync();
+
+                                }
                             }
                         }
                     }
                 }
             }
-            //Сервис для работы с архивом 
-            var service = new MyService(DateTime.Now);
+            var parser = new ByteParser();
             foreach (var reportObject in reportObjects)
             {
                 if (reportObject.reportBody is not null)
                 {
 
-                    //Распаковываешь архив с файлом и берешь файлы
-                    var item = service.GetSourceFilesFromZip(reportObject.reportBody);
+                    var item = parser.GetSourceFilesFromZip(reportObject.reportBody);
 
-                    var outputFilter = service.ParseFileBytes(item, reportObject.reportName);
+                    var outputFilter = parser.ParseFileBytes(item, reportObject.reportName,reportObject.modified_date);
                     await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
                 }
 
             }
-            ////Сохраняю в бд по табицам
             await filters.FlushAsync();
             await visuals.FlushAsync();
             await localMeasures.FlushAsync();

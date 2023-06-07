@@ -26,11 +26,12 @@ namespace AddToDbFunction.Helpers
                 return reader;
             }
         }
-        public void DeleteById(string id)
+        public void DeleteById(string tableName, string id)
         {
-            using (SqlCommand command = new SqlCommand($"DELETE FROM PBIX_to_Flat.Filters WHERE report_id = @reportId", _connection))
+            using (SqlCommand command = new SqlCommand($"DELETE FROM {tableName} WHERE report_id = @reportId", _connection))
             {
-                command.Parameters.AddWithValue("reportId", id);
+                //command.Parameters.AddWithValue("tableName", tableName);
+                command.Parameters.AddWithValue("reportId", id);             
                 // Execute the command
                 command.ExecuteNonQuery();
             }
