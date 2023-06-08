@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PBIX_to_Flat.OutputModels;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -30,6 +32,11 @@ namespace AddToDbFunction
             var personalAccessToken = Environment.GetEnvironmentVariable("PersonalAccessToken");
             var reportObjects = new List<ReportObject>();
 
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            string commitId = data?.commitId;
+            var commitDate = Convert.ToDateTime(data?.commitDate);
+
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Accept.Add(
@@ -41,31 +48,30 @@ namespace AddToDbFunction
                             string.Format("{0}:{1}", "", personalAccessToken))));
 
                 using (HttpResponseMessage response = client.GetAsync(
-
-                Environment.GetEnvironmentVariable("FileMetaDataURL")).Result)
+                Environment.GetEnvironmentVariable("CommitURL") + commitId + "/changes?api-version=7.0").Result
+                )
                 {
                     response.EnsureSuccessStatusCode();
 
-                    var folderMetaData = await response.Content.ReadAsStringAsync();
-                    var folderMetaDataJson = JObject.Parse(folderMetaData);
-                    var metaDataValue = folderMetaDataJson["value"];
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    var responseBodyaJson = JObject.Parse(responseBody);
+                    var commitChangesValue = responseBodyaJson["changes"];
 
-                    var item = metaDataValue[1];
-                    while (item is not null)
+                    foreach (var item in commitChangesValue)
                     {
-                        var stringBuilder = new StringBuilder(item["path"].ToString());
-                        reportObjects.Add(new ReportObject()
-                        {
-                            reportURL = item["url"].ToString() + "&includeContent=true",
-                            reportName = item["path"].ToString()
-                            .Remove(item["path"].ToString().Length - 5)
-                            .Replace(metaDataValue[0]["path"].ToString() + "/", ""),
-                            modified_date = Convert.ToDateTime(item["latestProcessedChange"]["committer"]["date"]),
-                            is_Changed = false,
-                            is_New = true
+                        var itemName = item["item"]["path"].ToString();
 
-                        });
-                        item = item.Next;
+                        if (itemName.EndsWith(".pbix"))
+                        {
+                            reportObjects.Add(new ReportObject()
+                            {
+                                reportURL = item["item"]["url"].ToString() + "&includeContent=true",
+                                reportName = Path.GetFileNameWithoutExtension(itemName),
+                                modified_date = commitDate,
+                                change_Type = item["changeType"].ToString(),
+
+                            });
+                        }
                     }
                 }
                 client.DefaultRequestHeaders.Accept.Remove(client.DefaultRequestHeaders.Accept.First());
@@ -78,44 +84,52 @@ namespace AddToDbFunction
 
                     using (SQLHelper sqlHelper = new SQLHelper(connection))
                     {
+                        //foreach (var reportObject in reportObjects)
+                        //{
+                        //    if (reportObject.change_Type == "edit" || reportObject.change_Type == "add")
+                        //    {
+                        //        using (SqlDataReader reader = sqlHelper.SelectGroupById(reportObject.reportName))
+                        //        {
+                        //            try
+                        //            {
+                        //                while (reader.Read())
+                        //                {
+
+                        //                    var item = reportObjects.Find(x => x.reportName == reader["report_id"].ToString());
+
+                        //                    if (item is not null)
+                        //                    {
+                        //                        sqlHelper.DeleteById("PBIX_to_Flat.Filters", reportObject.reportName);
+                        //                        sqlHelper.DeleteById("PBIX_to_Flat.Visuals", reportObject.reportName);
+                        //                        sqlHelper.DeleteById("PBIX_to_Flat.Local_Measures", reportObject.reportName);
+                        //                        using (HttpResponseMessage response = client.GetAsync(reportObject.reportURL).Result)
+                        //                        {
+                        //                            response.EnsureSuccessStatusCode();
+                        //                            reportObject.reportBody = await response.Content.ReadAsByteArrayAsync();
+
+                        //                        }
+
+                        //                    }
+                        //                }
+                        //            }
+                        //            finally
+                        //            {
+                        //                reader.Close();
+                        //            }
+                        //        }
+                        //    }
+                        //}
+
                         foreach (var reportObject in reportObjects)
                         {
-                            using (SqlDataReader reader = sqlHelper.SelectGroupById(reportObject.reportName))
-                            {
-                                try
-                                {
-                                    while (reader.Read())
-                                    {
-
-                                        var item = reportObjects.Find(x => x.reportName == reader["report_id"].ToString());
-
-                                        if (item is not null)
-                                        {
-                                            item.is_New = false;
-                                        }
-                                        if (item is not null && item.modified_date > Convert.ToDateTime(reader["Modified_Date"]))
-                                        {
-                                            item.is_Changed = true;
-                                        }
-                                    }
-                                }
-                                finally
-                                {
-                                    reader.Close();
-                                }
-                            }
-                        }
-
-                        foreach (var reportObject in reportObjects)
-                        {
-                            if (reportObject.is_Changed && !reportObject.is_New)
+                            if (reportObject.change_Type == "edit")
                             {
                                 sqlHelper.DeleteById("PBIX_to_Flat.Filters", reportObject.reportName);
                                 sqlHelper.DeleteById("PBIX_to_Flat.Visuals", reportObject.reportName);
                                 sqlHelper.DeleteById("PBIX_to_Flat.Local_Measures", reportObject.reportName);
 
                             }
-                            if (reportObject.is_New || reportObject.is_Changed)
+                            if (reportObject.change_Type == "edit" || reportObject.change_Type == "add")
                             {
                                 using (HttpResponseMessage response = client.GetAsync(reportObject.reportURL).Result)
                                 {
@@ -136,7 +150,7 @@ namespace AddToDbFunction
 
                     var item = parser.GetSourceFilesFromZip(reportObject.reportBody);
 
-                    var outputFilter = parser.ParseFileBytes(item, reportObject.reportName,reportObject.modified_date);
+                    var outputFilter = parser.ParseFileBytes(item, reportObject.reportName, reportObject.modified_date);
                     await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
