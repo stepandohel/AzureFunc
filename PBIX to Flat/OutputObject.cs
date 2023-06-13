@@ -8,7 +8,7 @@ namespace PBIX_to_Flat
     public class OutputObject
     {
         DateTime _dateTime;
-        public OutputObject(JObject input, string fileName,DateTime dateTime)
+        public OutputObject(JObject input, string fileName,DateTime dateTime, string path)
         {
             _reposrtIdentifier = fileName;
             _dateTime=dateTime;
@@ -36,7 +36,9 @@ namespace PBIX_to_Flat
                                 table_name = entity["name"].ToString(),
                                 measure_name = measure["name"].ToString(),
                                 DAX_definition = measure["expression"].ToString(),
-                                modified_date = _dateTime
+                                modified_date = _dateTime,
+                                path = path,
+                                is_deleted = "False"
                             });
                         }
                     }
@@ -50,7 +52,7 @@ namespace PBIX_to_Flat
                 string formattedrptfiltersJson = JToken.Parse(rptFilters).ToString();
                 JArray rptFiltersJson = JArray.Parse(formattedrptfiltersJson);
 
-                AddFilters(rptFiltersJson, "ReportFilter", null, null, null, null);
+                AddFilters(rptFiltersJson, "ReportFilter", null, null, null, null, null);
             }
             catch
             {
@@ -73,7 +75,7 @@ namespace PBIX_to_Flat
                         var pageFltJson = JArray.Parse(formattedpagfltJson);
 
                         // Page-Level Filters
-                        AddFilters(pageFltJson, "PageFilter", pageId, pageName, null, null);
+                        AddFilters(pageFltJson, "PageFilter", pageId, pageName, null, null, path);
                     }
 
                     // Visuals
@@ -177,7 +179,9 @@ namespace PBIX_to_Flat
                                         visual_type = visualType,
                                         table_name = tableName,
                                         object_name = objectName,
-                                        modified_date= _dateTime
+                                        modified_date= _dateTime,
+                                        path = path,
+                                        is_deleted = "False"
                                     });
                                 }
                             }
@@ -194,7 +198,7 @@ namespace PBIX_to_Flat
                             string formattedvisfilterJson = JToken.Parse(visfilter).ToString();
                             var visfilterJson = JArray.Parse(formattedvisfilterJson);
 
-                            AddFilters(visfilterJson, "VisualFilter", pageId, pageName, VisualId, visualType);
+                            AddFilters(visfilterJson, "VisualFilter", pageId, pageName, VisualId, visualType, path);
                         }
                     }
                 }
@@ -204,7 +208,7 @@ namespace PBIX_to_Flat
         private string _reposrtIdentifier;
 
 
-        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? visualId, string? visualType)
+        private void AddFilters(JArray filters, string filterLevel, string? pageId, string? pageName, string? visualId, string? visualType, string? path)
         {
             string filterValue = "";
             foreach (var item in filters.Children())
@@ -255,7 +259,9 @@ namespace PBIX_to_Flat
                     table_name = tblName,
                     column = objName,
                     filter_values = filterValue == "" ? null : filterValue,
-                    modified_date = _dateTime
+                    modified_date = _dateTime,
+                    path = path,
+                    is_deleted = "False"
                 });
             }
         }

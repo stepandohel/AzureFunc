@@ -40,7 +40,7 @@ namespace AddToDbFunction
             return outputBytes;
         }
 
-        public OutputObject ParseFileBytes(byte[] fileBytes, string reportName, DateTime dataTime)
+        public OutputObject ParseFileBytes(byte[] fileBytes, string reportName, DateTime dataTime, string? path)
         {
             string fileName = "Report.zip";
             byte[] compressedBytes;
@@ -77,7 +77,7 @@ namespace AddToDbFunction
                                         memString.Position = 0;
                                         var extractedBytes = memString.ToArray();
                                         var str = Encoding.Unicode.GetString(extractedBytes);
-                                        outputFilter = new OutputObject(JObject.Parse(str), reportName, dataTime);
+                                        outputFilter = new OutputObject(JObject.Parse(str), reportName, dataTime, path);
                                     }
                                 }
                             }

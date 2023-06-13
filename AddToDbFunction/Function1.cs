@@ -35,7 +35,7 @@ namespace AddToDbFunction
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             string commitId = data?.commitId;
-            var commitDate = Convert.ToDateTime(data?.commitDate);
+            var commitDate = DateTime.Now; // Convert.ToDateTime(data?.commitDate);
 
             using (HttpClient client = new HttpClient())
             {
@@ -69,7 +69,7 @@ namespace AddToDbFunction
                                 reportName = Path.GetFileNameWithoutExtension(itemName),
                                 modified_date = commitDate,
                                 change_Type = item["changeType"].ToString(),
-
+                                path = item["item"]["path"].ToString(),
                             });
                         }
                     }
@@ -147,10 +147,9 @@ namespace AddToDbFunction
             {
                 if (reportObject.reportBody is not null)
                 {
-
                     var item = parser.GetSourceFilesFromZip(reportObject.reportBody);
-
-                    var outputFilter = parser.ParseFileBytes(item, reportObject.reportName, reportObject.modified_date);
+                    var path = RemoveFileNameFromPath(reportObject.path, reportObject.reportName);
+                    var outputFilter = parser.ParseFileBytes(item, reportObject.reportName, reportObject.modified_date, path);
                     await Task.WhenAll(outputFilter.Filters.Select(x => filters.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Visuals.Select(x => visuals.AddAsync(x)));
                     await Task.WhenAll(outputFilter.Measures.Select(x => localMeasures.AddAsync(x)));
@@ -160,6 +159,10 @@ namespace AddToDbFunction
             await filters.FlushAsync();
             await visuals.FlushAsync();
             await localMeasures.FlushAsync();
+        }
+        private string RemoveFileNameFromPath(string path, string fileName)
+        {
+            return path.Substring(0, path.Length - fileName.Length - ".pbix".Length);            
         }
     }
 }

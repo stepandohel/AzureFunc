@@ -15,5 +15,8 @@ namespace PBIX_to_Flat.OutputModels
         public string? column { get; set; }
         public string? filter_values { get; set; }
         public DateTime modified_date { get; set; }
+        public string? path { get; set; }
+        public string? is_deleted { get; set; }
+        public DateTime? deleted_time { get; set; }
     }
 }

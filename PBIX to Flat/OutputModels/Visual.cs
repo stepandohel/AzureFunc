@@ -11,5 +11,8 @@
         public string? object_name { get; set; }
         public int id { get; set; }
         public DateTime modified_date { get; set; }
+        public string? path { get; set; }
+        public string? is_deleted { get; set; }
+        public DateTime? deleted_time { get; set; }
     }
 }

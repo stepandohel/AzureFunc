@@ -11,6 +11,7 @@ namespace AddToDbFunction
         public string change_Type { get; set; }
         public bool is_Changed { get; set; }
         public bool is_New { get; set; }
+        public string path { get; set; }
 
     }
 }
