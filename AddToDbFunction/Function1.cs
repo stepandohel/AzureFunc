@@ -138,6 +138,12 @@ namespace AddToDbFunction
 
                                 }
                             }
+                            if (reportObject.change_Type == "delete")
+                            {
+                                sqlHelper.UpdateDeletedById("PBIX_to_Flat.Filters", reportObject.reportName, commitDate);
+                                sqlHelper.UpdateDeletedById("PBIX_to_Flat.Visuals", reportObject.reportName, commitDate);
+                                sqlHelper.UpdateDeletedById("PBIX_to_Flat.Local_Measures", reportObject.reportName, commitDate);
+                            }
                         }
                     }
                 }

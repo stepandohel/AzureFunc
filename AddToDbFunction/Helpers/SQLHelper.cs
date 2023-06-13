@@ -36,6 +36,18 @@ namespace AddToDbFunction.Helpers
                 command.ExecuteNonQuery();
             }
         }
+
+        public void UpdateDeletedById(string tableName, string id, DateTime deleted)
+        {
+            using (SqlCommand command = new SqlCommand($"UPDATE {tableName} SET is_deleted = @true, deleted_time = @deleted WHERE report_id = @reportId", _connection))
+            {
+                command.Parameters.AddWithValue("@reportId", id);
+                command.Parameters.AddWithValue("@true", "True");
+                command.Parameters.AddWithValue("@deleted", deleted);
+                // Execute the command
+                command.ExecuteNonQuery();
+            }
+        }
         public void Dispose()
         {
             _connection.Dispose();

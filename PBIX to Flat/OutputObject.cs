@@ -37,8 +37,7 @@ namespace PBIX_to_Flat
                                 measure_name = measure["name"].ToString(),
                                 DAX_definition = measure["expression"].ToString(),
                                 modified_date = _dateTime,
-                                path = path,
-                                is_deleted = "False"
+                                path = path
                             });
                         }
                     }
